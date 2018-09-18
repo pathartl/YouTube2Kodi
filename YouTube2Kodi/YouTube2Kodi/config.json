@@ -1,0 +1,15 @@
+﻿{
+  "Channels": [
+    "https://www.youtube.com/channel/UCAlx_PzLB4uasR0OUIhWNjw"
+  ],
+  "DownloadPath": "out/",
+  "DestinationPath": "Channels/",
+  "ArchiveFilename": "archive.txt",
+  "SubtitleLanguage": "en",
+  "SupportedFileExtensions": [
+    "mkv",
+    "mp4",
+    "webm",
+    "avi"
+  ]
+}
