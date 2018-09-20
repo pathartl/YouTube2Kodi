@@ -3,9 +3,11 @@ using Newtonsoft.Json;
 using NYoutubeDL;
 using NYoutubeDL.Helpers;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using YouTube2Kodi.Models;
 using YouTube2Kodi.Models.YouTube;
 
@@ -15,36 +17,82 @@ namespace YouTube2Kodi.Service
     {
         private Config Config { get; set; }
         private YoutubeDL YouTubeDL { get; set; }
+        private List<ArchiveItem> ArchiveItems { get; set; }
+
+        BlockingCollection<string> DownloadQueue = new BlockingCollection<string>();
 
         public YouTubeService()
         {
             Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("config.json"));
+            ArchiveItems = new List<ArchiveItem>();
         }
 
         public void InitYouTubeDL()
         {
             YouTubeDL = new YoutubeDL();
 
-            YouTubeDL.Options.FilesystemOptions.Output = Config.DownloadPath + "%(title)s.%(ext)s";
-            YouTubeDL.Options.SubtitleOptions.SubFormat = Enums.SubtitleFormat.srt;
-            YouTubeDL.Options.DownloadOptions.PlaylistReverse = true;
-            YouTubeDL.Options.FilesystemOptions.WriteInfoJson = true;
-            YouTubeDL.Options.SubtitleOptions.SubLang = Config.SubtitleLanguage;
-            YouTubeDL.Options.PostProcessingOptions.ConvertSubs = Enums.SubtitleFormat.srt;
-            YouTubeDL.Options.PostProcessingOptions.EmbedSubs = true;
             YouTubeDL.Options.VideoSelectionOptions.DownloadArchive = Config.ArchiveFilename;
-            YouTubeDL.Options.VideoFormatOptions.MergeOutputFormat = Enums.VideoFormat.mkv;
-            YouTubeDL.Options.FilesystemOptions.RestrictFilenames = true;
 
             YouTubeDL.StandardOutputEvent += (sender, output) => Console.WriteLine(output);
             YouTubeDL.StandardErrorEvent += (sender, errorOutput) => Console.WriteLine(errorOutput);
         }
 
+        public void LoadArchiveItems()
+        {
+            int counter = 0;
+            string line;
+
+            // Read the file and add it line by line
+            StreamReader file = new StreamReader(Config.ArchiveFilename);
+            while ((line = file.ReadLine()) != null)
+            {
+                var splitLine = line.Split(' ');
+
+                var item = new ArchiveItem();
+                item.ServiceName = splitLine[0];
+                item.VideoId = splitLine[1];
+
+                ArchiveItems.Add(item);
+
+                counter++;
+            }
+
+            file.Close();
+        }
+
         public void DownloadAllChannels()
         {
+            LoadArchiveItems();
+
             foreach (var channel in Config.Channels)
             {
                 DownloadChannel(channel);
+            }
+        }
+
+        private void DownloadVideoWorker(int workerId)
+        {
+            foreach (var videoUrl in DownloadQueue.GetConsumingEnumerable())
+            {
+                var videoDownloader = new YoutubeDL();
+
+                videoDownloader.Options.FilesystemOptions.Output = Config.DownloadPath + "%(title)s.%(ext)s";
+                videoDownloader.Options.SubtitleOptions.SubFormat = Enums.SubtitleFormat.srt;
+                videoDownloader.Options.DownloadOptions.PlaylistReverse = true;
+                videoDownloader.Options.FilesystemOptions.WriteInfoJson = true;
+                videoDownloader.Options.SubtitleOptions.SubLang = Config.SubtitleLanguage;
+                videoDownloader.Options.PostProcessingOptions.ConvertSubs = Enums.SubtitleFormat.srt;
+                videoDownloader.Options.PostProcessingOptions.EmbedSubs = true;
+                videoDownloader.Options.VideoSelectionOptions.DownloadArchive = Config.ArchiveFilename;
+                videoDownloader.Options.VideoFormatOptions.MergeOutputFormat = Enums.VideoFormat.mkv;
+                videoDownloader.Options.FilesystemOptions.RestrictFilenames = true;
+
+                videoDownloader.StandardOutputEvent += (sender, output) => Console.WriteLine(output);
+                videoDownloader.StandardErrorEvent += (sender, errorOutput) => Console.WriteLine(errorOutput);
+
+                videoDownloader.VideoUrl = videoUrl;
+
+                videoDownloader.Download();
             }
         }
 
@@ -52,7 +100,32 @@ namespace YouTube2Kodi.Service
         {
             InitYouTubeDL();
             YouTubeDL.VideoUrl = channelUrl;
-            YouTubeDL.Download();
+
+            var playlistDownloadInfo = (NYoutubeDL.Models.PlaylistDownloadInfo)YouTubeDL.GetDownloadInfo();
+
+            DownloadQueue = new BlockingCollection<string>();
+
+            Task[] downloadWorkers = new Task[Config.Threads];
+
+            for (int i = 0; i < Config.Threads; i++)
+            {
+                int workerId = i;
+                Task task = new Task(() => DownloadVideoWorker(workerId));
+                downloadWorkers[i] = task;
+
+                task.Start();
+            } 
+
+            foreach (var video in playlistDownloadInfo.Videos)
+            {
+                if (!ArchiveItems.Any(ai => ai.VideoId == video.Url))
+                {
+                    DownloadQueue.Add(video.Url);
+                }
+            }
+
+            DownloadQueue.CompleteAdding();
+            Task.WaitAll(downloadWorkers);
 
             var files = Directory.EnumerateFiles(Config.DownloadPath, "*.*", SearchOption.AllDirectories)
                 .Where(f => f.EndsWith(".json"));

@@ -4,6 +4,7 @@
   ],
   "DownloadPath": "out/",
   "DestinationPath": "Channels/",
+  "Threads": 4,
   "ArchiveFilename": "archive.txt",
   "SubtitleLanguage": "en",
   "SupportedFileExtensions": [

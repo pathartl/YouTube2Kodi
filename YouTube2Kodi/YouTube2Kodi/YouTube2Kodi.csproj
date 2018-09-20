@@ -20,4 +20,8 @@
     <PackageReference Include="Handlebars.Net" Version="1.9.5" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\NYoutubeDL\src\NYoutubeDL\NYoutubeDL.csproj" />
+  </ItemGroup>
+
 </Project>
