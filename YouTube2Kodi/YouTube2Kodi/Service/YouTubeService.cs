@@ -82,22 +82,29 @@ namespace YouTube2Kodi.Service
             {
                 var videoDownloader = new YoutubeDL();
 
-                videoDownloader.Options.FilesystemOptions.Output = Config.DownloadPath + "%(title)s.%(ext)s";
-                videoDownloader.Options.SubtitleOptions.SubFormat = Enums.SubtitleFormat.srt;
                 videoDownloader.Options.DownloadOptions.PlaylistReverse = true;
+                videoDownloader.Options.DownloadOptions.Retries = 2;
+
+                videoDownloader.Options.FilesystemOptions.Output = String.Format("\"{0}{1}\"", Config.DownloadPath, "%(title)s.%(ext)s");
+                videoDownloader.Options.FilesystemOptions.RestrictFilenames = true;
                 videoDownloader.Options.FilesystemOptions.WriteInfoJson = true;
-                videoDownloader.Options.SubtitleOptions.SubLang = Config.SubtitleLanguage;
+
+                videoDownloader.Options.GeneralOptions.AbortOnError = true;
+
+                videoDownloader.Options.NetworkOptions.SocketTimeout = 5;
+
                 videoDownloader.Options.PostProcessingOptions.ConvertSubs = Enums.SubtitleFormat.srt;
                 videoDownloader.Options.PostProcessingOptions.EmbedSubs = true;
+
+                videoDownloader.Options.SubtitleOptions.SubFormat = Enums.SubtitleFormat.srt;
+                videoDownloader.Options.SubtitleOptions.SubLang = Config.SubtitleLanguage;
+
                 videoDownloader.Options.VideoSelectionOptions.DownloadArchive = Config.ArchiveFilename;
-                videoDownloader.Options.VideoFormatOptions.MergeOutputFormat = Enums.VideoFormat.mkv;
-                videoDownloader.Options.VideoFormatOptions.Format = Enums.VideoFormat.best;
-                videoDownloader.Options.FilesystemOptions.RestrictFilenames = true;
 
                 videoDownloader.StandardOutputEvent += (sender, output) => Console.WriteLine(output);
                 videoDownloader.StandardErrorEvent += (sender, errorOutput) => Console.WriteLine(errorOutput);
 
-                videoDownloader.VideoUrl = videoUrl;
+                videoDownloader.VideoUrl = String.Format("\"http://youtube.com/watch?v={0}\"", videoUrl);
 
                 videoDownloader.Download();
             }
