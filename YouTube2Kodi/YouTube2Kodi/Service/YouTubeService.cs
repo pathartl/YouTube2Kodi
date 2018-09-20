@@ -85,6 +85,7 @@ namespace YouTube2Kodi.Service
                 videoDownloader.Options.PostProcessingOptions.EmbedSubs = true;
                 videoDownloader.Options.VideoSelectionOptions.DownloadArchive = Config.ArchiveFilename;
                 videoDownloader.Options.VideoFormatOptions.MergeOutputFormat = Enums.VideoFormat.mkv;
+                videoDownloader.Options.VideoFormatOptions.Format = Enums.VideoFormat.best;
                 videoDownloader.Options.FilesystemOptions.RestrictFilenames = true;
 
                 videoDownloader.StandardOutputEvent += (sender, output) => Console.WriteLine(output);
