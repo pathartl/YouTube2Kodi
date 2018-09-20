@@ -24,7 +24,7 @@ namespace YouTube2Kodi.Models
             AiredDate = DateTime.ParseExact(download.upload_date, "yyyyMMdd", CultureInfo.InvariantCulture);
             Season = download.season_number.HasValue ? download.season_number.Value : AiredDate.Year;
             Episode = download.episode_number.HasValue ? download.episode_number.Value : 0;
-            SeriesTitle = download.playlist_uploader;
+            SeriesTitle = String.IsNullOrEmpty(download.playlist_uploader) ? download.uploader : download.playlist_uploader;
             Thumbnail = download.thumbnail;
             Rating = download.average_rating * 2;
             Description = download.description;

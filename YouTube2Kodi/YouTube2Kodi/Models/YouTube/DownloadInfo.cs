@@ -7,6 +7,7 @@ namespace YouTube2Kodi.Models.YouTube
     public class DownloadInfo
     {
         public string playlist_uploader { get; set; }
+        public string uploader { get; set; }
         public string title { get; set; }
         public string thumbnail { get; set; }
         public string upload_date { get; set; }
