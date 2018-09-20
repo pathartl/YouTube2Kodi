@@ -19,6 +19,10 @@ namespace YouTube2Kodi.Service
         public YouTubeService()
         {
             Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("config.json"));
+        }
+
+        public void InitYouTubeDL()
+        {
             YouTubeDL = new YoutubeDL();
 
             YouTubeDL.Options.FilesystemOptions.Output = Config.DownloadPath + "%(title)s.%(ext)s";
@@ -46,6 +50,7 @@ namespace YouTube2Kodi.Service
 
         public void DownloadChannel(string channelUrl)
         {
+            InitYouTubeDL();
             YouTubeDL.VideoUrl = channelUrl;
             YouTubeDL.Download();
 
