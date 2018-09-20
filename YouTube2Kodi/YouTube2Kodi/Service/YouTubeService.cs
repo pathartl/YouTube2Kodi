@@ -39,25 +39,31 @@ namespace YouTube2Kodi.Service
 
         public void LoadArchiveItems()
         {
-            int counter = 0;
-            string line;
-
-            // Read the file and add it line by line
-            StreamReader file = new StreamReader(Config.ArchiveFilename);
-            while ((line = file.ReadLine()) != null)
+            try
             {
-                var splitLine = line.Split(' ');
+                int counter = 0;
+                string line;
 
-                var item = new ArchiveItem();
-                item.ServiceName = splitLine[0];
-                item.VideoId = splitLine[1];
+                // Read the file and add it line by line
+                StreamReader file = new StreamReader(Config.ArchiveFilename);
+                while ((line = file.ReadLine()) != null)
+                {
+                    var splitLine = line.Split(' ');
 
-                ArchiveItems.Add(item);
+                    var item = new ArchiveItem();
+                    item.ServiceName = splitLine[0];
+                    item.VideoId = splitLine[1];
 
-                counter++;
+                    ArchiveItems.Add(item);
+
+                    counter++;
+                }
+
+                file.Close();
+            } catch (Exception)
+            {
+
             }
-
-            file.Close();
         }
 
         public void DownloadAllChannels()
