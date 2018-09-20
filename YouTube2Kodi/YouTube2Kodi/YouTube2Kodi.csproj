@@ -18,7 +18,6 @@
 
   <ItemGroup>
     <PackageReference Include="Handlebars.Net" Version="1.9.5" />
-    <PackageReference Include="NYoutubeDL" Version="0.9.0" />
   </ItemGroup>
 
 </Project>

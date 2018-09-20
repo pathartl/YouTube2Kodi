@@ -1,0 +1,3 @@
+[submodule "NYoutubeDL"]
+	path = NYoutubeDL
+	url = https://github.com/pathartl/NYoutubeDL.git
